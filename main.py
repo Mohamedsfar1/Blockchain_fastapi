@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from bson import ObjectId
 from blockchain import Blockchain
 from pymongo.errors import ConnectionFailure
+from fastapi import Form
 
 # MongoDB connection for local setup
 MONGO_URI = "mongodb://localhost:27017/"  # Local MongoDB URI
@@ -74,3 +75,21 @@ def get_blocks():
     except Exception as e:
         print("DB Read Error:", e)
         return {"error": str(e)}
+
+@app.post("/mine-form")
+def mine_block_form(
+    sender: str = Form(...),
+    receiver: str = Form(...),
+    amount: float = Form(...),
+    price: float = Form(...)
+):
+    block = blockchain.mine_block(sender, receiver, amount, price)
+
+    # Convert and insert into DB
+    block_serialized = convert_objectid_to_str(block)
+    try:
+        collection.insert_one(block_serialized)
+    except Exception as e:
+        return {"error": str(e)}
+
+    return {"message": "Block mined via form!", "block": block}
